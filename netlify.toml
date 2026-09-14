@@ -1,0 +1,14 @@
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NETLIFY_NEXT_SKEW_PROTECTION = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Load Netlify's latest Next.js runtime without pinning its version.
+# Configure Supabase public credentials and GEMINI_API_KEY in Netlify environment variables.

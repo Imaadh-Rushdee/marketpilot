@@ -1,0 +1,4 @@
+.netlify/
+.vercel/
+.env*
+!.env.example
