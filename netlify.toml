@@ -10,5 +10,8 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[functions."publish-scheduled"]
+  schedule = "*/15 * * * *"
+
 # Load Netlify's latest Next.js runtime without pinning its version.
 # Configure Supabase, caption AI, and Cloudflare Workers AI credentials in Netlify environment variables.

@@ -50,6 +50,7 @@ export interface ContentItem {
   day: number;
   slot?: number;
   date: string;
+  publishTime?: string;
   platform: Platform;
   platforms?: Platform[];
   type: string;

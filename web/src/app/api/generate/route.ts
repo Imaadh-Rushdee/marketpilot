@@ -28,7 +28,7 @@ function demoCampaign(profile: BusinessProfile, campaign: CampaignInput, startDa
       `Thinking about ${product}? Save this post as a reminder to explore the details. ${profile.name} is here to answer your questions.`,
       `Ready to explore ${product}? Reach out to ${profile.name} today. ${offer || "Contact us to learn more."}`,
     ];
-    return { day: dayIndex + 1, slot, date: date.toISOString().slice(0, 10), platform, platforms: [...platforms],
+    return { day: dayIndex + 1, slot, date: date.toISOString().slice(0, 10), publishTime: ["09:00","12:00","15:00","18:00","21:00"][slot-1], platform, platforms: [...platforms],
       type: platform === "TikTok" ? "Short video" : i % 3 === 1 ? "Carousel" : "Post",
       hook: `${angle} ${product}${postsPerDay > 1 ? ` - ${["What it offers", "How it helps", "What to consider", "Why now", "Next steps"][slot - 1]}` : ""}`, body: `${bodies[(i + offset) % bodies.length]} Today we are focusing on ${themes[dayIndex % themes.length]} from a ${["practical", "helpful", "educational", "timely", "action-oriented"][slot - 1]} perspective.`,
       cta: `${offer || "Contact us to learn more."}${profile.contact ? ` - ${profile.contact}` : ""}`,
@@ -88,7 +88,7 @@ Create exactly ${total} content items: ${postsPerDay} distinct posts on each of 
     if (!text) throw new Error("Empty AI response");
     const result = JSON.parse(text);
     if (!validStrategy(result.strategy) || !Array.isArray(result.contents) || result.contents.length !== total || !result.contents.every(validContent) || !result.contents.every((c: {platform: string}) => body.campaign.platforms.includes(c.platform))) throw new Error("Invalid AI response");
-    result.contents = result.contents.map((c: object, i: number) => { const dayIndex=Math.floor(i/postsPerDay); const d = new Date(`${startDate}T12:00:00Z`); d.setUTCDate(d.getUTCDate()+dayIndex); return { ...c, platform: body.campaign.platforms[0], platforms: [...body.campaign.platforms], day: dayIndex+1, slot:i%postsPerDay+1, date: d.toISOString().slice(0,10) }; });
+    result.contents = result.contents.map((c: object, i: number) => { const dayIndex=Math.floor(i/postsPerDay),slot=i%postsPerDay+1; const d = new Date(`${startDate}T12:00:00Z`); d.setUTCDate(d.getUTCDate()+dayIndex); return { ...c, platform: body.campaign.platforms[0], platforms: [...body.campaign.platforms], day: dayIndex+1, slot, publishTime:["09:00","12:00","15:00","18:00","21:00"][slot-1], date: d.toISOString().slice(0,10) }; });
     await consume(auth.supabase,"posts",requested);return NextResponse.json(result);
   } catch { return NextResponse.json({ error: "AI generation timed out or returned unusable content. Please try again." }, { status: 502 }); }
 }
