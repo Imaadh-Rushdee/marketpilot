@@ -93,7 +93,7 @@ const port = Number(process.env.AUTH_TEST_PORT || 3012);
 const base = `http://localhost:${port}`;
 let logs = "";
 const app = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--port", String(port)], {
-  env: {...process.env, NEXT_PUBLIC_SUPABASE_URL:supabaseUrl,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:"sb_publishable_test",NEXT_PUBLIC_SUPABASE_ANON_KEY:"",GEMINI_API_KEY:"",MARKETPILOT_DEMO_MODE:"false",CLOUDFLARE_ACCOUNT_ID:"test-account",CLOUDFLARE_AI_API_TOKEN:"test-ai-token",CLOUDFLARE_AI_BASE_URL:supabaseUrl,MARKETPILOT_TEST_DIST_DIR:".next-test"},
+  env: {...process.env, NEXT_PUBLIC_SUPABASE_URL:supabaseUrl,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:"sb_publishable_test",NEXT_PUBLIC_SUPABASE_ANON_KEY:"",GEMINI_API_KEY:"",MARKETPILOT_DEMO_MODE:"false",CLOUDFLARE_ACCOUNT_ID:"test-account",CLOUDFLARE_AI_API_TOKEN:"test-ai-token",CLOUDFLARE_AI_BASE_URL:supabaseUrl,META_APP_ID:"",META_APP_SECRET:"",INSTAGRAM_APP_ID:"",INSTAGRAM_APP_SECRET:"",TIKTOK_CLIENT_KEY:"",TIKTOK_CLIENT_SECRET:"",MARKETPILOT_TEST_DIST_DIR:".next-test"},
   stdio: ["ignore","pipe","pipe"],
 });
 app.stdout.on("data", chunk => {logs += chunk;}); app.stderr.on("data",chunk => {logs += chunk;});
@@ -142,6 +142,7 @@ try {
   assert.equal((await api("/api/graphics",null,"POST",{})).status,401);
   assert.equal((await api("/api/media",null)).status,401);
   assert.equal((await api("/api/social/connections")).status,401);
+  assert.equal((await api("/api/social/publish",null,"POST",{})).status,401);
   const social=await api("/api/social/connections",a);assert.equal(social.status,200);assert.deepEqual((await social.json()).connections,[]);
   const unconfigured=await api("/api/social/connect/meta",a);assert.equal(unconfigured.status,307);assert.equal(new URL(unconfigured.headers.get("location")).pathname,"/app");
   const logo=await sharp({create:{width:120,height:60,channels:4,background:"#ee1122"}}).png().toBuffer();
