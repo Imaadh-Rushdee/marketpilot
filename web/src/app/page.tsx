@@ -1,16 +1,15 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ImageIcon, Layers3, Share2, Sparkles } from "lucide-react";
-import Logo from "./assets/logo.png";
 import {FloatPreview,HeroMotion,Reveal} from "./marketing-motion";
+import {MarketingFooter,MarketingNav} from "./marketing-shell";
 
 export default function LandingPage(){return <main className="landing">
-  <header className="landing-nav"><Image src={Logo} alt="MarketPilot" priority/><nav><a href="#features">Features</a><a href="#how">How it works</a><Link href="/pricing">Pricing</Link></nav><div><Link className="landing-link" href="/login">Sign in</Link><Link className="primary" href="/login">Start creating</Link></div></header>
+  <MarketingNav/>
   <section className="landing-hero"><HeroMotion><span className="landing-kicker"><Sparkles size={15}/>AI social marketing workspace</span><h1>Plan, design and publish better social content.</h1><p>Turn your business details into complete campaigns with distinct captions, hashtags and branded graphics for every connected social channel.</p><div className="landing-actions"><Link className="primary" href="/login">Create your account <ArrowRight size={18}/></Link><a className="chip" href="#how">See how it works</a></div><small>No card required to explore the workspace.</small></HeroMotion><FloatPreview><div className="landing-preview"><div className="preview-top"><span></span><span></span><span></span></div><div className="preview-art"><b>YOUR BRAND</b><h2>Campaign content that looks ready to publish.</h2><p>Clear copy, useful details and polished creative in one workflow.</p><button>Learn more</button></div></div></FloatPreview></section>
   <section className="landing-strip"><span>Facebook</span><span>Instagram</span><span>TikTok</span><span>LinkedIn</span><span>Pinterest</span><span>X</span></section>
   <section id="features" className="landing-section"><p className="eyebrow">ONE WORKSPACE</p><h2>Everything needed to run a consistent social calendar.</h2><div className="feature-grid">{[[Layers3,"Multi-post campaigns","Create one to five unique posts each day with separate hooks, captions, CTAs and hashtags."],[ImageIcon,"Branded creative","Generate graphics or upload finished artwork, then attach the right design to each post."],[Share2,"Connected accounts","Link supported business accounts and keep every destination visible from one screen."],[CalendarDays,"Content calendar","Review dates, edit each post, approve the final version and track what has been published."]].map(([Icon,title,copy])=><article key={String(title)}><Icon size={23}/><h3>{String(title)}</h3><p>{String(copy)}</p></article>)}</div></section>
   <section id="how" className="landing-section steps"><p className="eyebrow">HOW IT WORKS</p><h2>From business brief to approved post.</h2><div>{["Add your brand, audience and contact details.","Choose channels, campaign length and daily frequency.","Generate unique copy and create or upload artwork.","Review, approve and publish to your connected accounts."].map((x,i)=><article key={x}><b>{i+1}</b><p>{x}</p></article>)}</div></section>
   <Reveal><section id="pricing" className="landing-section pricing"><p className="eyebrow">PRICING</p><h2>Free, Basic, Plus and Premium plans for every publishing pace.</h2><Link className="primary" href="/pricing">Compare all plans <ArrowRight size={18}/></Link></section></Reveal>
   <section className="landing-cta"><h2>Give every campaign a clear plan and professional finish.</h2><Link className="primary" href="/login">Create your workspace <ArrowRight size={18}/></Link></section>
-  <footer><Image src={Logo} alt="MarketPilot"/><span>AI-assisted social campaign planning for growing businesses.</span><Link href="/login">Sign in</Link></footer>
+  <MarketingFooter/>
 </main>}
