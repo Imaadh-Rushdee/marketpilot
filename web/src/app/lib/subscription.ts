@@ -1,0 +1,6 @@
+import type {SupabaseClient} from "@supabase/supabase-js";
+import {planById,type Plan} from "./plans";
+
+export async function userPlan(supabase:SupabaseClient,userId:string):Promise<Plan>{const {data,error}=await supabase.from("marketpilot_subscriptions").select("plan,status,current_period_end").eq("user_id",userId).maybeSingle();if(error)throw new Error("SUBSCRIPTION_SETUP");if(!data||data.status!=="active"||(data.current_period_end&&new Date(data.current_period_end)<new Date()))return planById("free");return planById(data.plan);}
+export async function usage(supabase:SupabaseClient,userId:string,metric:"posts"|"graphics"){const start=new Date();const day=(start.getUTCDay()+6)%7;start.setUTCDate(start.getUTCDate()-day);start.setUTCHours(0,0,0,0);const {data,error}=await supabase.from("marketpilot_usage").select("quantity").eq("user_id",userId).eq("metric",metric).eq("period_start",start.toISOString().slice(0,10)).maybeSingle();if(error)throw new Error("SUBSCRIPTION_SETUP");return Number(data?.quantity||0);}
+export async function consume(supabase:SupabaseClient,metric:"posts"|"graphics",amount:number){const {data,error}=await supabase.rpc("consume_marketpilot_usage",{p_metric:metric,p_amount:amount});if(error||data!==true)throw new Error("USAGE_WRITE");}

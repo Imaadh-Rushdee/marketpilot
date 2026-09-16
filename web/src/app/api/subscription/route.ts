@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";import {authorize} from "../../lib/supabase/authorize";import {usage,userPlan} from "../../lib/subscription";
+const headers={"Cache-Control":"private, no-store"};
+export async function GET(request:Request){const auth=await authorize(request);if(auth.response)return auth.response;try{const plan=await userPlan(auth.supabase,auth.user.id);const [posts,graphics]=await Promise.all([usage(auth.supabase,auth.user.id,"posts"),usage(auth.supabase,auth.user.id,"graphics")]);return NextResponse.json({plan,usage:{posts,graphics}},{headers});}catch{return NextResponse.json({error:"Run the subscriptions migration."},{status:503,headers});}}
