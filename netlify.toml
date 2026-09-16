@@ -11,4 +11,4 @@
   package = "@netlify/plugin-nextjs"
 
 # Load Netlify's latest Next.js runtime without pinning its version.
-# Configure Supabase public credentials and GEMINI_API_KEY in Netlify environment variables.
+# Configure Supabase, caption AI, and Cloudflare Workers AI credentials in Netlify environment variables.
