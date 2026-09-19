@@ -7,6 +7,7 @@ import { validCampaigns, validProfile } from "./validation";
 
 type SaveState = "saved" | "saving" | "error" | "conflict";
 type Snapshot = { profile: BusinessProfile; campaigns: Campaign[] };
+function withoutStatuses(campaigns:Campaign[]){return campaigns.map(c=>({...c,contents:c.contents.map(x=>({...x,status:undefined}))}));}
 
 export function useWorkspace(userId: string) {
   const [profile, setProfile] = useState(defaultProfile);
@@ -61,7 +62,18 @@ export function useWorkspace(userId: string) {
           });
           const data = await response.json();
           if (!response.ok) {
-            if (response.status === 409) conflict.current = true;
+            if(response.status===409){
+              const current=await fetch("/api/workspace",{cache:"no-store",headers:{"x-marketpilot-user":userId},signal:AbortSignal.timeout(30000)});
+              const remote=await current.json();const baseline=JSON.parse(lastSaved.current||"{}");
+              if(current.ok&&validCampaigns(remote.campaigns)&&validProfile(remote.profile)&&Number.isInteger(remote.revision)&&JSON.stringify(remote.profile)===JSON.stringify(baseline.profile)&&JSON.stringify(withoutStatuses(remote.campaigns))===JSON.stringify(withoutStatuses(baseline.campaigns||[]))){
+                const posted=new Set<string>(remote.campaigns.flatMap((c:Campaign)=>c.contents.filter(x=>x.status==="Posted").map(x=>x.id)));
+                latest.current={...latest.current,campaigns:latest.current.campaigns.map(c=>({...c,contents:c.contents.map(x=>posted.has(x.id)?{...x,status:"Posted"}:x)}))};
+                revision.current=remote.revision;lastSaved.current=JSON.stringify({profile:remote.profile,campaigns:remote.campaigns});
+                if(mounted.current){setSavedSnapshot(lastSaved.current);setCampaigns(latest.current.campaigns);}
+                continue;
+              }
+              conflict.current=true;
+            }
             throw new Error(data.error || "Cloud save failed. Please retry.");
           }
           if (!Number.isInteger(data.revision)) throw new Error("Cloud save could not be confirmed. Export a backup before reloading.");

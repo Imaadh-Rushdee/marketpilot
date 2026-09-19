@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { authorize } from "../../../lib/supabase/authorize";
-import { ASSET_BUCKET, cleanImage } from "../../../lib/brand-media";
+import { ASSET_BUCKET } from "../../../lib/brand-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,13 +16,15 @@ export async function POST(request: Request) {
     const file = form.get("file");
     if (!(file instanceof File) || !file.size) return NextResponse.json({ error: "Choose a PNG, JPEG or WebP image." }, { status: 400 });
     if (file.size > 10_000_000) return NextResponse.json({ error: "Use an image below 10 MB." }, { status: 413 });
-    const output = await cleanImage(Buffer.from(await file.arrayBuffer()));
-    const metadata = await sharp(output).metadata();
+    const source = Buffer.from(await file.arrayBuffer());
+    const metadata = await sharp(source,{limitInputPixels:25000000}).metadata();
+    if(!["png","jpeg","webp"].includes(metadata.format||""))return NextResponse.json({error:"Choose a PNG, JPEG or WebP image."},{status:400});
+    const output = await sharp(source,{limitInputPixels:25000000,animated:false}).rotate().resize(1600,1600,{fit:"inside",withoutEnlargement:true}).flatten({background:"#ffffff"}).jpeg({quality:82,mozjpeg:true}).toBuffer();
     const width = metadata.width || 1, height = metadata.height || 1, ratio = width / height;
     const format = ratio > 1.35 ? "landscape" : ratio < 0.9 ? "portrait" : "square";
-    const id = crypto.randomUUID(), path = `${auth.user.id}/graphics/${id}.png`;
+    const id = crypto.randomUUID(), path = `${auth.user.id}/graphics/${id}.jpg`;
     const headline = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Uploaded artwork";
-    const { error: uploadError } = await auth.supabase.storage.from(ASSET_BUCKET).upload(path, output, { contentType: "image/png", upsert: false });
+    const { error: uploadError } = await auth.supabase.storage.from(ASSET_BUCKET).upload(path, output, { contentType: "image/jpeg", upsert: false,cacheControl:"3600" });
     if (uploadError) return NextResponse.json({ error: "Unable to upload artwork. Check the V2 storage migration." }, { status: 503 });
     const { data, error } = await auth.supabase.from("marketpilot_graphics").insert({ id, user_id: auth.user.id, path, kind: "post", format, headline, demo: false }).select("id,path,kind,format,headline,created_at,demo").single();
     if (error) {

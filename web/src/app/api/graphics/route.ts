@@ -105,6 +105,8 @@ export async function DELETE(request: Request) {
   const id=new URL(request.url).searchParams.get("id");if(!id || !/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:"Invalid graphic."},{status:400});
   const {data,error}=await auth.supabase.from("marketpilot_graphics").select("path").eq("user_id",auth.user.id).eq("id",id).maybeSingle();
   if(error || !data || !ownPath(data.path,auth.user.id)) return NextResponse.json({error:"Graphic unavailable."},{status:404});
+  const {data:workspace}=await auth.supabase.from("user_workspaces").select("campaigns").eq("user_id",auth.user.id).maybeSingle();
+  if(Array.isArray(workspace?.campaigns)&&workspace.campaigns.some((campaign:{contents?:{graphicPath?:string}[]})=>campaign.contents?.some(content=>content.graphicPath===data.path)))return NextResponse.json({error:"This graphic is attached to a post. Remove it from that post before deleting it."},{status:409});
   const {error:removeError}=await auth.supabase.storage.from(ASSET_BUCKET).remove([data.path]);if(removeError) return NextResponse.json({error:"Unable to remove image. Retry."},{status:503});
   const {error:deleteError}=await auth.supabase.from("marketpilot_graphics").delete().eq("user_id",auth.user.id).eq("id",id);
   return deleteError ? NextResponse.json({error:"Unable to remove library entry. Retry."},{status:503}) : NextResponse.json({ok:true});

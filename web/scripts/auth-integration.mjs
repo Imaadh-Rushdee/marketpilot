@@ -50,6 +50,17 @@ const service = http.createServer(async (request, response) => {
     const image=await sharp({create:{width:32,height:32,channels:4,background:"#2255cc"}}).png().toBuffer();
     return send(200,{success:true,result:{image:image.toString("base64")}});
   }
+  if(url.pathname.startsWith("/storage/v1/object/sign/")){
+    const user=tokenUser(request),path=decodeURIComponent(url.pathname.replace("/storage/v1/object/sign/marketpilot-assets/",""));
+    if(request.method==="GET"&&url.searchParams.get("token")==="test"){const file=assets.get(path);if(!file)return send(404,{message:"Not found"});response.writeHead(200,{"Content-Type":path.endsWith(".jpg")?"image/jpeg":"image/png",...cors});response.end(file);return;}
+    if(!user||!path.startsWith(user.id+"/")||!assets.has(path))return send(404,{message:"Not found"});
+    return send(200,{signedURL:`/object/public-signed/marketpilot-assets/${encodeURIComponent(path)}?token=test`});
+  }
+  if(url.pathname.startsWith("/storage/v1/object/public-signed/")){
+    const path=decodeURIComponent(decodeURIComponent(url.pathname.replace("/storage/v1/object/public-signed/marketpilot-assets/",""))),file=assets.get(path);
+    if(!file||url.searchParams.get("token")!=="test")return send(404,{message:"Not found"});
+    response.writeHead(200,{"Content-Type":path.endsWith(".jpg")?"image/jpeg":"image/png",...cors});response.end(file);return;
+  }
   const user = tokenUser(request);
   if (url.pathname === "/auth/v1/user") return user && !revoked ? send(200,session(user).user) : send(401,{msg:"Invalid JWT",code:"bad_jwt"});
   if (!user) return send(401,{message:"Authentication required"});
@@ -148,11 +159,11 @@ try {
   const logo=await sharp({create:{width:120,height:60,channels:4,background:"#ee1122"}}).png().toBuffer();
   const form=new FormData();form.set("file",new Blob([logo],{type:"image/png"}),"logo.png");
   const uploaded=await fetch(`${base}/api/media`,{method:"POST",headers:{Cookie:a},body:form});assert.equal(uploaded.status,200);const logoPath=(await uploaded.json()).path;
-  const preview=await api(`/api/media?path=${encodeURIComponent(logoPath)}`,a);assert.equal(preview.status,200);
+  const preview=await api(`/api/media?path=${encodeURIComponent(logoPath)}`,a);assert.equal(preview.status,307);assert.equal((await fetch(preview.headers.get("location"))).status,200);
   assert.equal((await api(`/api/media?path=${encodeURIComponent(logoPath)}`,b)).status,404);
   const brief={profile:{...initial.profile,logoPath,brandColor:"#11aa99",businessType:"Bakery",keywords:"fresh bread"},kind:"ad",format:"landscape",headline:"Fresh bread every morning",cta:"Visit us today",prompt:"A warm bakery with fresh bread"};
   const rendered=await api("/api/graphics",a,"POST",brief);assert.equal(rendered.status,200);const graphic=(await rendered.json()).graphic;assert.equal(graphic.demo,false);
-  const png=await api(`/api/media?path=${encodeURIComponent(graphic.path)}`,a);const image=Buffer.from(await png.arrayBuffer());const metadata=await sharp(image).metadata();assert.equal(metadata.width,1600);assert.equal(metadata.height,900);
+  const png=await api(`/api/media?path=${encodeURIComponent(graphic.path)}`,a);assert.equal(png.status,307);const image=Buffer.from(await (await fetch(png.headers.get("location"))).arrayBuffer());const metadata=await sharp(image).metadata();assert.equal(metadata.width,1600);assert.equal(metadata.height,900);
   // The original opaque red logo is composited, not recreated by AI.
   const pixel=await sharp(image).extract({left:110,top:110,width:1,height:1}).removeAlpha().raw().toBuffer();assert.deepEqual([...pixel],[238,17,34]);
   assert.equal((await(await api("/api/graphics",a)).json()).graphics.length,1);

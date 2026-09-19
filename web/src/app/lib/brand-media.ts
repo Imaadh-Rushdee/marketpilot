@@ -7,6 +7,6 @@ export async function cleanImage(bytes: Buffer) {
   const image = sharp(bytes, { limitInputPixels: 25000000, animated: false });
   const metadata = await image.metadata();
   if (!["png", "jpeg", "webp"].includes(metadata.format || "")) throw new Error("Use a PNG, JPEG or WebP image.");
-  return image.rotate().resize(1600,1600,{fit:"inside",withoutEnlargement:true}).png().toBuffer();
+  return image.rotate().resize(1600,1600,{fit:"inside",withoutEnlargement:true}).png({compressionLevel:9}).toBuffer();
 }
 export const mediaUrl = (path: string) => `/api/media?path=${encodeURIComponent(path)}`;
